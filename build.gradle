@@ -1,0 +1,36 @@
+apply plugin: 'java'
+apply plugin: 'ivy-publish'
+
+group = "com.mycompany"
+version = '1.0'
+
+publishing {
+    repositories {
+        ivy { url = "file://${buildDir}/repo"}
+    }
+    afterEvaluate {
+        publications {
+            main(IvyPublication) { pub ->
+                pub.from components.java
+                project.configurations['runtimeElements'].artifacts.each { af ->
+                    if (af.type != 'jar') {
+                        pub.artifact(af) {
+                            name = af.name
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+tasks.create('assemble-sources', Zip) {
+    from sourceSets.main.allJava
+    classifier = 'sources'
+}
+
+artifacts {
+    add('runtimeElements', tasks.named('assemble-sources')) {
+        type = 'sources'
+    }
+}
